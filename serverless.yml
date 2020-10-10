@@ -1,4 +1,3 @@
-# NOTE: update this with your service name
 service: notes-app-api
 
 # Create an optimized package for our functions 
@@ -6,9 +5,21 @@ package:
   individually: true
 
 plugins:
-  - serverless-bundle # Package our functions with Webpack
-  - serverless-offline
-  - serverless-dotenv-plugin # Load .env as environment variables
+  - serverless-dotenv-plugin
+  - serverless-webpack
+
+custom:
+  # Our stage is based on what is passed in when running serverless
+  # commands. Otherwise, fall back to what we have set in the provider section.
+  stage: ${opt:stage, self:provider.stage}
+  # Set the table name here so we can use it while testing locally
+  tableName: ${self:custom.stage}-notes
+
+  webpack:
+    webpackConfig: 'webpack.config.js'   # Name of webpack configuration file
+    includeModules: false   # Node modules configuration for packaging
+    packager: 'npm'   # Packager that will be used to package your external modules
+    excludeFiles: src/**/*.test.?s # Provide a glob for files to ignore
 
 provider:
   name: aws
@@ -16,12 +27,88 @@ provider:
   stage: dev
   region: us-east-1
   environment:
-   SAMPLE_ENV_VAR: ${env:SAMPLE_ENV_VAR}
+   tableName: ${self:custom.tableName}
+   stripeSecretKey: ${env:STRIPE_SECRET_KEY}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      # Restrict our IAM role permissions to
+      # the specific table for the stage
+      Resource:
+        - "Fn::GetAtt": [ NotesTable, Arn ]
+
+resources:
+  - ${file(resources/api-gateway-errors.yml)}
+  - ${file(resources/notes-table.yml)}
+  - ${file(resources/attachments-storage.yml)}
+  - ${file(resources/user-pool.yml)}
+  - ${file(resources/identity-pool.yml)}
 
 functions:
   hello:
-    handler: handler.hello
+    handler: ./src/lambda/handler.hello
     events:
       - http:
           path: hello
           method: get
+
+  create:
+    handler: ./src/lambda/create.main
+    events:
+      - http:
+          path: notes
+          method: post
+          cors: true
+          authorizer: aws_iam
+
+  get:
+    handler: ./src/lambda/get.main
+    events:
+      - http:
+          path: notes/{id}
+          method: get
+          cors: true
+          authorizer: aws_iam
+
+  list:
+    handler: ./src/lambda/list.main
+    events:
+      - http:
+          path: notes
+          method: get
+          cors: true
+          authorizer: aws_iam
+
+  update:
+    handler: ./src/lambda/update.main
+    events:
+      - http:
+          path: notes/{id}
+          method: put
+          cors: true
+          authorizer: aws_iam
+
+  delete:
+    handler: ./src/lambda/delete.main
+    events:
+      - http:
+          path: notes/{id}
+          method: delete
+          cors: true
+          authorizer: aws_iam
+
+  billing:
+    handler: ./src/lambda/billing.main
+    events:
+      - http:
+          path: billing
+          method: post
+          cors: true
+          authorizer: aws_iam

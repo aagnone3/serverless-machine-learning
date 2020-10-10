@@ -4,7 +4,10 @@
   "description": "A Node.js starter for Serverless Framework with ES6 and TypeScript support",
   "main": "handler.js",
   "scripts": {
-    "test": "serverless-bundle test"
+    "clean": "rm -rf lib .build",
+    "compile": "tsc",
+    "build": "npm run clean && npm run compile",
+    "test": "jest"
   },
   "author": "",
   "license": "MIT",
@@ -13,9 +16,33 @@
     "url": "https://github.com/AnomalyInnovations/serverless-nodejs-starter.git"
   },
   "devDependencies": {
-    "serverless-bundle": "2.0.0",
+    "@babel/preset-typescript": "^7.10.4",
+    "@types/aws-lambda": "^8.10.62",
+    "@types/jest": "^26.0.14",
+    "@types/node": "^10.14.4",
+    "@types/uuid": "^8.3.0",
+    "aws-sdk": "^2.433.0",
+    "jest": "^26.4.2",
+    "serverless": "^2.1.1",
+    "serverless-aws-documentation": "^1.1.0",
     "serverless-dotenv-plugin": "^2.1.1",
-    "serverless-offline": "^5.3.3"
+    "serverless-dynamodb-local": "^0.2.39",
+    "serverless-iam-roles-per-function": "^2.0.2",
+    "serverless-offline": "^6.7.0",
+    "serverless-plugin-tracing": "^2.0.0",
+    "serverless-reqvalidator-plugin": "^1.0.3",
+    "serverless-webpack": "^5.3.5",
+    "ts-jest": "^26.4.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^4.0.3",
+    "webpack": "^4.44.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "aws-lambda": "^1.0.6",
+    "react-router-dom": "^5.1.2",
+    "source-map-support": "^0.5.19",
+    "stripe": "^8.97.0",
+    "uuid": "^3.3.2",
+    "winston": "^3.2.1"
+  }
 }
